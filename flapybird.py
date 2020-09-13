@@ -46,6 +46,19 @@ def spawn_pipe():
         pipe_list.append(create_pipe())
 
 
+#---------------------------------
+def remove_pipe_out_screen(pipes):
+    global obstacle_number 
+    if(len(pipes) != 0):
+        if(pipes[0][0]+52 < 0):
+            pipes.pop(0)
+            pipes.pop(0)
+            obstacle_number -= 2
+    
+    return pipes[:]
+#---------------------------------
+
+
 def move_floor():
     display.blit(floor, (floor_pos_x, DISPLAY_HEIGHT - floor_rect.height // 2))
     display.blit(floor, (floor_pos_x + DISPLAY_WIDTH, DISPLAY_HEIGHT - floor_rect.height // 2))
@@ -62,6 +75,19 @@ def check_collision(pipes):
         return False
 
     return True
+
+
+#---------------------------------------------
+def check_obstacle_passed():
+    global obstacle_number 
+    pipes = pipe_list[:]
+    if(len(pipes) > obstacle_number):
+        if(pipes[obstacle_number][0]+52 < 50):
+            obstacle_number += 2
+            return True
+
+    return False
+#---------------------------------------------
 
 
 def score_display(game_state):
@@ -86,6 +112,15 @@ def score_update(scr, high_scr):
     return high_scr
 
 
+#-----------------------------------
+def increment_score(scr, increment):
+    if(check_obstacle_passed()):
+        return scr+increment
+
+    return scr
+#-----------------------------------
+
+
 'DISPLAY'
 display = pg.display.set_mode(DISPLAY_AREA)
 pg.display.set_caption('FlaPyBird')
@@ -98,6 +133,9 @@ floor_pos_x = 0
 pipe = pg.image.load('assets/images/sprites/Pipe.png')
 pipe_list = []
 pipe_spawn = pg.USEREVENT
+#-------------------
+obstacle_number = 0
+#-------------------
 pg.time.set_timer(pipe_spawn, 1200)
 pipe_hei = [200, 300, 400]
 bg_game_over = pg.image.load('assets/images/sprites/Game_Over.png')
@@ -155,6 +193,9 @@ while True:
                 bird_move = 0
                 bird_rect.center = (50, DISPLAY_HEIGHT // 2)
                 score = 0
+                #-------------------
+                obstacle_number = 0
+                #-------------------
 
         if event.type == bird_flap:
             if bird_index < 2:
@@ -174,20 +215,27 @@ while True:
         bird_move += gravity
         bird_rect.centery += int(bird_move)
         bird_rotate = rotate(bird)
+
         display.blit(bird_rotate, bird_rect)
         game = check_collision(pipe_list)
 
         # PIPE
         draw_pipe(pipe_list)
         pipe_list = move_pipe(pipe_list)
+        # -------------------------------------------
+        pipe_list = remove_pipe_out_screen(pipe_list)
+        # -------------------------------------------
 
         # SCORE
+        # -------------------------------
+        score = increment_score(score, 1)
+        # -------------------------------
         score_display('main_game')
-        if score_spd <= 60:
-            score_spd += 1
-        else:
-            score += 1
-            score_spd = 0
+        # if score_spd <= 60:
+        #     score_spd += 1
+        # else:
+        #     score += 1
+        #     score_spd = 0
 
     else:
         display.blit(bg_game_over, bg_game_over_rect)
